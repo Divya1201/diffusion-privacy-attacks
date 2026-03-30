@@ -54,8 +54,8 @@ def main() -> None:
     # LOADING DATASET
     # ====================
     if args.use_cifar:
-    print("📦 Preparing CIFAR-10 dataset...")
-    args.reference_dir = prepare_cifar10(Path("data"))
+        print("📦 Preparing CIFAR-10 dataset...")
+        args.reference_dir = prepare_cifar10(Path("data"))
 
     config = AttackConfig(
         image_size=args.image_size,
@@ -79,6 +79,19 @@ def main() -> None:
         config=config,
     )
 
+    # Show top Suspicious Results
+    print("\n🔥 TOP SUSPICIOUS SAMPLES:")
+
+    for r in results[:5]:
+        print(
+            f"{r.query_path} → {r.match_path} | "
+            f"L2={r.l2_distance:.2f} | cluster={r.cluster_size}"
+        )
+
+    if not results:
+        print("⚠️ No suspicious samples found")
+        return
+        
     # =========================
     # SAVE CSV
     # =========================
@@ -106,11 +119,11 @@ def main() -> None:
                 result.cluster_size,
             ])
 
-    print(f"\n✅ Saved {len(results)} rows to {args.output}")
+        print(f"\n✅ Saved {len(results)} rows to {args.output}")
 
-    print("\n Show top matches...")
-    for result in results[:3]:    # show first 3
-        show_pair(result.query_path, result.match_path)
+        print("\n Show top matches...")
+        for result in results[:3]:    # show first 3
+            show_pair(result.query_path, result.match_path)
         
 
 if __name__ == "__main__":
