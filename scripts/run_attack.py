@@ -5,6 +5,7 @@ import argparse
 import csv
 from pathlib import Path
 
+from diffusion_privacy_attacks.dataset import prepare_cifar10
 from diffusion_privacy_attacks import AttackConfig, run_memorization_attack
 from diffusion_privacy_attacks.visualize import show_pair
 
@@ -30,6 +31,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--match-threshold", type=float, default=50.0)
 
     parser.add_argument(
+        "--use-cifar",
+        action="store_true",
+        help="Automatically download and use CIFAR-10 dataset",
+    )
+    parser.add_argument(
         "--no-normalize",
         action="store_true",
         help="Disable normalization",
@@ -44,6 +50,12 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    # ====================
+    # LOADING DATASET
+    # ====================
+    if args.use_cifar:
+    print("📦 Preparing CIFAR-10 dataset...")
+    args.reference_dir = prepare_cifar10(Path("data"))
 
     config = AttackConfig(
         image_size=args.image_size,
