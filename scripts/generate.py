@@ -1,12 +1,29 @@
 from diffusion_privacy_attacks.diffusion import load_model
 import os
 
-pipe = load_model()
+def generate_images(prompts, num_images=50, output_dir="generated"):
+    pipe = load_model()
 
-prompt = "a photo of a dog"
+    os.makedirs(output_dir, exist_ok=True)
 
-os.makedirs("generated", exist_ok=True)
+    for prompt in prompts:
+        safe_prompt = prompt.replace(" ", "_")
 
-for i in range(100):   # start with 100 (later 500)
-    image = pipe(prompt).images[0]
-    image.save(f"generated/img_{i}.png")
+        print(f"\n🚀 Generating for: {prompt}")
+
+        for i in range(num_images):
+            image = pipe(prompt).images[0]
+
+            image.save(f"{output_dir}/{safe_prompt}_{i}.png")
+
+    print("\n✅ All images generated")
+
+
+if __name__ == "__main__":
+    prompts = [
+        "a photo of a dog",
+        "a photo of a cat",
+        "a car on the road"
+    ]
+
+    generate_images(prompts, num_images=50)
