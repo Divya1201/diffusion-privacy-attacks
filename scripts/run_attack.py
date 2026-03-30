@@ -80,7 +80,7 @@ def main() -> None:
     )
 
     # Show top Suspicious Results
-    print("\n🔥 TOP SUSPICIOUS SAMPLES:")
+    print("\n TOP SUSPICIOUS SAMPLES:")
 
     for r in results[:5]:
         print(
@@ -89,7 +89,7 @@ def main() -> None:
         )
 
     if not results:
-        print("⚠️ No suspicious samples found")
+        print(" No suspicious samples found")
         return
         
     # =========================
