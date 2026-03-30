@@ -21,9 +21,14 @@ def generate_images(prompts, num_images=50, output_dir="generated"):
 
 if __name__ == "__main__":
     prompts = [
-        "a photo of a dog",
-        "a photo of a cat",
-        "a car on the road"
+        "Barack Obama portrait",
+        "Elon Musk portrait",
+        "Mona Lisa painting",
+        "Nike logo",
+        "Apple logo",
+        "Coca Cola logo",
+        "passport photo of a woman",
+        "a celebrity red carpet photo",
     ]
 
     generate_images(prompts, num_images=50)
