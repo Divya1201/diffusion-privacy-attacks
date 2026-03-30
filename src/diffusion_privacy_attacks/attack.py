@@ -33,7 +33,7 @@ class AttackResult:
     mse_distance: float
     l2_distance: float
     cluster_size: int
-
+    confidence: float
 
 # =========================
 # UTILS
@@ -94,7 +94,7 @@ def _distances(query: np.ndarray, candidate: np.ndarray, config: AttackConfig) -
 # =========================
 
 def find_similar_generated(generated_paths: List[Path], config: AttackConfig):
-    images = {
+    #images = {
         # p: _load_image(p, config.image_size, config.normalize)
         # for p in generated_paths
 
@@ -136,7 +136,10 @@ def find_similar_generated(generated_paths: List[Path], config: AttackConfig):
 
     return clusters
 
+def compute_confidence(cluster_size, l2_distance, adaptive_score):
+    return cluster_size / ((l2_distance + 1e-6) * (adaptive_score + 1e-6))
 
+    
 # =========================
 # MAIN ATTACK
 # =========================
@@ -218,33 +221,41 @@ def run_memorization_attack(
 
         ranked = []
 
-    for reference_path, reference_img in reference_vectors.items():
-        mse, l2 = _distances(query, reference_img, config)
-        ranked.append((reference_path, mse, l2))
+        for reference_path, reference_img in reference_vectors.items():
+            mse, l2 = _distances(query, reference_img, config)
+            ranked.append((reference_path, mse, l2))
 
-    # sort by L2 (keep this!)
-    ranked.sort(key=lambda x: x[2])
+        # sort by L2 (keep this!)
+        ranked.sort(key=lambda x: x[2])
 
-    # NEW: adaptive scoring
-    score = adaptive_score(query_vec, dataset_vectors)
+        # NEW: adaptive scoring
+        score = adaptive_score(query_vec, dataset_vectors)
 
-    for match_path, mse, l2 in ranked[: config.top_k]:
+        for match_path, mse, l2 in ranked[: config.top_k]:
 
-        # REPLACED CONDITION
-        if score < 1:
-            results.append(
-                AttackResult(
-                    query_path=generated_path,
-                    match_path=match_path,
-                    mse_distance=mse,
-                    l2_distance=l2,
-                    cluster_size=cluster_map[generated_path],
+            # REPLACED CONDITION
+            if score < 1:
+
+                confidence = compute_confidence(
+                    cluster_map[generated_path],
+                    l2,
+                    score
                 )
-            )
+                
+                results.append(
+                    AttackResult(
+                        query_path=generated_path,
+                        match_path=match_path,
+                        mse_distance=mse,
+                        l2_distance=l2,
+                        cluster_size=cluster_map[generated_path],
+                        confidence=confidence,
+                    )
+                )
 
     # final sort  - Debug view
     # results.sort(key=lambda r: (r.query_path, r.l2_distance))
 
     # final research view
-    results.sort(key=lambda r: (r.l2_distance, -r.cluster_size))
+    results.sort(key=lambda r: r.confidence, reverse=True)
     return results
