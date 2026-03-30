@@ -202,7 +202,9 @@ def run_memorization_attack(
                     )
                 )
 
-    # final sort
-    results.sort(key=lambda r: (r.query_path, r.l2_distance))
+    # final sort  - Debug view
+    # results.sort(key=lambda r: (r.query_path, r.l2_distance))
 
+    # final research view
+    results.sort(key=lambda r: (r.l2_distance, -r.cluster_size))
     return results
