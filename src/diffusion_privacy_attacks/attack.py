@@ -7,7 +7,7 @@ from typing import Iterable, List
 import numpy as np
 from PIL import Image
 
-from clip_utils import get_clip_embedding
+from diffusion_privacy_attacks.clip_utils import get_clip_embedding
 
 # =========================
 # CONFIG
