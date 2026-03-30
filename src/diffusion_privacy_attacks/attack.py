@@ -189,33 +189,58 @@ def run_memorization_attack(
     # -------------------------
     # STEP 3: MATCH AGAINST DATASET
     # -------------------------
+    
     results: List[AttackResult] = []
+
+    def adaptive_score(query_vec, dataset_vectors, k=50):
+        distances = [np.linalg.norm(query_vec - v) for v in dataset_vectors]
+        distances = np.array(distances)
+
+        nearest = np.sort(distances)[:k]
+
+        # avoid division by zero
+        denom = (0.5 * nearest.mean()) + 1e-8
+
+        score = distances.min() / denom
+        return score
+
+
+    # Precompute dataset vectors (flattened)
+    dataset_vectors = [
+        _flatten(img) for img in reference_vectors.values()
+    ]
 
     for generated_path in selected_images:
         query = _load_image(generated_path, config.image_size, config.normalize)
 
+        # flatten once
+        query_vec = _flatten(query)
+
         ranked = []
 
-        for reference_path, reference_img in reference_vectors.items():
-            mse, l2 = _distances(query, reference_img, config)
-            ranked.append((reference_path, mse, l2))
+    for reference_path, reference_img in reference_vectors.items():
+        mse, l2 = _distances(query, reference_img, config)
+        ranked.append((reference_path, mse, l2))
 
-        # sort by L2 (important)
-        ranked.sort(key=lambda x: x[2])
+    # sort by L2 (keep this!)
+    ranked.sort(key=lambda x: x[2])
 
-        for match_path, mse, l2 in ranked[: config.top_k]:
+    # NEW: adaptive scoring
+    score = adaptive_score(query_vec, dataset_vectors)
 
-            # threshold filtering (paper idea)
-            if l2 < config.match_threshold:
-                results.append(
-                    AttackResult(
-                        query_path=generated_path,
-                        match_path=match_path,
-                        mse_distance=mse,
-                        l2_distance=l2,
-                        cluster_size=cluster_map[generated_path],
-                    )
+    for match_path, mse, l2 in ranked[: config.top_k]:
+
+        # REPLACED CONDITION
+        if score < 1:
+            results.append(
+                AttackResult(
+                    query_path=generated_path,
+                    match_path=match_path,
+                    mse_distance=mse,
+                    l2_distance=l2,
+                    cluster_size=cluster_map[generated_path],
                 )
+            )
 
     # final sort  - Debug view
     # results.sort(key=lambda r: (r.query_path, r.l2_distance))
