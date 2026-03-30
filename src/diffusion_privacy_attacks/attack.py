@@ -7,6 +7,7 @@ from typing import Iterable, List
 import numpy as np
 from PIL import Image
 
+from clip_utils import get_clip_embedding
 
 # =========================
 # CONFIG
@@ -20,7 +21,7 @@ class AttackConfig:
 
     # NEW (important)
     patch_size: int = 32
-    cluster_threshold: float = 50.0   # similarity threshold
+    cluster_threshold: float = 0.1   # similarity threshold
     cluster_min_size: int = 5         # cluster size for memorization
     match_threshold: float = 50.0     # dataset match threshold
 
@@ -61,6 +62,9 @@ def _flatten(arr: np.ndarray) -> np.ndarray:
 # DISTANCES
 # =========================
 
+def cosine_distance(a,b):
+    return 1-np.dot(a,b)
+    
 def _patch_l2(img1: np.ndarray, img2: np.ndarray, patch_size: int) -> float:
     h, w, _ = img1.shape
     max_dist = 0.0
@@ -91,8 +95,12 @@ def _distances(query: np.ndarray, candidate: np.ndarray, config: AttackConfig) -
 
 def find_similar_generated(generated_paths: List[Path], config: AttackConfig):
     images = {
-        p: _load_image(p, config.image_size, config.normalize)
-        for p in generated_paths
+        # p: _load_image(p, config.image_size, config.normalize)
+        # for p in generated_paths
+
+    images = {
+        p: get_clip_embedding(p)
+        for p in generated_paths 
     }
 
     clusters = []
@@ -108,10 +116,17 @@ def find_similar_generated(generated_paths: List[Path], config: AttackConfig):
             if p1 == p2:
                 continue
 
-            dist = _patch_l2(images[p1], images[p2], config.patch_size)
+            # dist = _patch_l2(images[p1], images[p2], config.patch_size)
+            clip_dist = cosine_distance(images[p1], images[p2])
+            
+            if clip_dist < config.cluster_threshold:
 
-            if dist < config.cluster_threshold:
-                group.append(p2)
+                img1 = _load_image(p1, config.image_size, config.normalize)
+                img2 = _load_image(p2, config.image_size, config.normalize)
+
+                l2_dist = _patch_l2(img1, img2, config.patch_size)
+                if l2_dist < config.match_threshold:
+                    group.append(p2)
 
         if len(group) >= config.cluster_min_size:
             print(f"Cluster found with size {len(group)}")
