@@ -114,6 +114,8 @@ def find_similar_generated(generated_paths: List[Path], config: AttackConfig):
                 group.append(p2)
 
         if len(group) >= config.cluster_min_size:
+            print(f"Cluster found with size {len(group)}")
+            
             clusters.append(group)
             visited.update(group)
 
