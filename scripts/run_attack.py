@@ -6,7 +6,7 @@ import csv
 from pathlib import Path
 
 from diffusion_privacy_attacks import AttackConfig, run_memorization_attack
-
+from diffusion_privacy_attacks.visualize import show_pair
 
 # =========================
 # ARGUMENTS
@@ -96,6 +96,10 @@ def main() -> None:
 
     print(f"\n✅ Saved {len(results)} rows to {args.output}")
 
+    print("\n Show top matches...")
+    for result in results[:3]:    # show first 3
+        show_pair(result.query_path, result.match_path)
+        
 
 if __name__ == "__main__":
     main()
