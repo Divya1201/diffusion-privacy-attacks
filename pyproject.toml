@@ -1,6 +1,7 @@
+toml_content = '''
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "diffusion-privacy-attacks"
@@ -22,4 +23,10 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
+'''
+
+with open("pyproject.toml", "w") as f:
+    f.write(toml_content)
+
+print("✅ pyproject.toml fixed")
