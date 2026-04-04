@@ -23,12 +23,12 @@ if __name__ == "__main__":
     prompts = [
         "Barack Obama portrait",
         "Elon Musk portrait",
-        "Mona Lisa painting",
+        #"Mona Lisa painting",
         "Nike logo",
         "Apple logo",
-        "Coca Cola logo",
-        "passport photo of a woman",
-        "a celebrity red carpet photo",
+        #"Coca Cola logo",
+        #"passport photo of a woman",
+        #"a celebrity red carpet photo",
     ]
 
     generate_images(prompts, num_images=50)
