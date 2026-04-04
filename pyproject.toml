@@ -1,32 +1,25 @@
-toml_content = '[build-system]\n' \
-               'requires = ["setuptools>=68", "wheel"]\n' \
-               'build-backend = "setuptools.build_meta"\n' \
-               '\n' \
-               '[project]\n' \
-               'name = "diffusion-privacy-attacks"\n' \
-               'version = "1.0.0"\n' \
-               'description = "Extracting Training Data from Diffusion Models"\n' \
-               'requires-python = ">=3.9"\n' \
-               'dependencies = [\n' \
-               '    "torch>=2.0",\n' \
-               '    "torchvision>=0.15",\n' \
-               '    "diffusers>=0.20",\n' \
-               '    "transformers>=4.30",\n' \
-               '    "accelerate>=0.20",\n' \
-               '    "open-clip-torch>=2.20",\n' \
-               '    "Pillow>=9.0",\n' \
-               '    "numpy>=1.24",\n' \
-               '    "matplotlib>=3.7",\n' \
-               '    "scipy>=1.10",\n' \
-               '    "faiss-cpu>=1.7",\n' \
-               ']\n' \
-               '\n' \
-               '[tool.setuptools.packages.find]\n' \
-               'where = ["src"]\n'
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
-with open("pyproject.toml", "w") as f:
-    f.write(toml_content)
+[project]
+name = "diffusion-privacy-attacks"
+version = "1.0.0"
+description = "Extracting Training Data from Diffusion Models"
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "diffusers>=0.20",
+    "transformers>=4.30",
+    "accelerate>=0.20",
+    "open-clip-torch>=2.20",
+    "Pillow>=9.0",
+    "numpy>=1.24",
+    "matplotlib>=3.7",
+    "scipy>=1.10",
+    "faiss-cpu>=1.7"
+]
 
-# Verify it looks correct — no blank first line
-with open("pyproject.toml", "r") as f:
-    print(f.read())
+[tool.setuptools.packages.find]
+where = ["src"]
