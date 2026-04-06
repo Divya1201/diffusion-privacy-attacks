@@ -43,7 +43,8 @@ def load_stable_diffusion(
     used in the paper. Use 'CompVis/stable-diffusion-v1-4'.
     """
     if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        #device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cpu"
 
     pipe = StableDiffusionPipeline.from_pretrained(
         model_id,
