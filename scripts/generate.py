@@ -1,4 +1,4 @@
-from diffusion_privacy_attacks.diffusion import load_model
+from diffusion_privacy_attacks.diffusion import load_stable_diffusion
 import os
 
 def generate_images(prompts, num_images=50, output_dir="generated"):
