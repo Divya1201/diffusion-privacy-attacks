@@ -2,7 +2,7 @@ from diffusion_privacy_attacks.diffusion import load_stable_diffusion
 import os
 
 def generate_images(prompts, num_images=50, output_dir="generated"):
-    pipe = load_model()
+    pipe = load_stable_diffusion()
 
     os.makedirs(output_dir, exist_ok=True)
 
