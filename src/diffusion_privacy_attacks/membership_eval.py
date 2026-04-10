@@ -11,7 +11,8 @@ from membership_inference import (
 )
 
 from diffusers import DDPMPipeline
-
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve
 
 # ==============================
 # CONFIG
@@ -109,6 +110,25 @@ def main():
 
     print(f"LiRA score: {score:.4f}")
     print(f"Prediction: {'member' if score > 0 else 'non-member'}")
+
+    labels = np.concatenate([
+        np.ones(len(member_losses)),
+        np.zeros(len(nonmember_losses))
+    ])
+
+    scores = -np.concatenate([member_losses, nonmember_losses])
+
+    fpr, tpr, _ = roc_curve(labels, scores)
+
+    plt.figure()
+    plt.plot(fpr, tpr)
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("FPR")
+    plt.ylabel("TPR")
+    plt.title("Membership Inference ROC (CIFAR)")
+    plt.grid()
+    plt.show()
 
 
 if __name__ == "__main__":
