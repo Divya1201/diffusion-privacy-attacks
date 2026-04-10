@@ -106,12 +106,20 @@ def main():
     # ----------------------------
     # LiRA attack
     # ----------------------------
-    print("\n Running LiRA attack...")
+    print("\n Running LiRA (per-sample approximation)...")
 
     lira = LiRAAttack(member_losses, nonmember_losses)
 
-    sample_loss = member_losses[0]
-    score = lira.score(sample_loss)
+    correct = 0
+    total = min(50, len(member_losses))  # evaluate on subset
+
+    for i in range(total):
+        loss = member_losses[i]
+        pred = lira.predict(loss)
+        if pred == 1:
+            correct += 1
+
+    print(f"LiRA Accuracy (members): {correct}/{total} = {correct/total:.3f}")
 
     print(f"LiRA score: {score:.4f}")
     print(f"Prediction: {'member' if score > 0 else 'non-member'}")
