@@ -1,9 +1,10 @@
 from pathlib import Path
 from dataset import prepare_cifar10, score_duplicates_clip
 from clip_utils import embed_directory
+import pickle
 
 # ==============================
-# STEP 2: DATA → PROMPTS
+# DATA → PROMPTS
 # ==============================
 
 def path_to_prompt(path):
@@ -24,6 +25,12 @@ def main():
     print("🔍 Finding duplicates...")
     duplicate_counts = score_duplicates_clip(embeddings, cosine_threshold=0.9)
 
+    # save duplicate counts for evaluation
+    with open("duplicate_counts.pkl", "wb") as f:
+        pickle.dump(duplicate_counts, f)
+
+    print(" Saved duplicate counts to duplicate_counts.pkl")
+
     # 4. Sort
     sorted_items = sorted(
         duplicate_counts.items(),
@@ -36,7 +43,7 @@ def main():
     top_images = [img for img, _ in sorted_items[:top_k]]
 
     # 6. Convert to prompts
-    prompts = [path_to_prompt(p) for p in top_images]
+    prompts = list(set(path_to_prompt(p) for p in top_images))
 
     print("\n🔥 TOP PROMPTS:")
     for p in prompts:
