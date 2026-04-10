@@ -13,6 +13,12 @@ from diffusion_privacy_attacks.diffusion import (
 OUTPUT_DIR = Path("outputs/generated")
 
 def load_prompts(file="prompts.txt"):
+    if not Path(file).exists():
+        raise FileNotFoundError(
+            " prompts.txt not found.\n"
+            " Run: python prepare_prompts.py"
+        )
+
     with open(file, "r") as f:
         return [line.strip() for line in f.readlines()]
 
