@@ -1,7 +1,7 @@
 from pathlib import Path
 import torch
 
-from diffusion_privacy_attacks.diffusion import (
+from diffusion import (
     load_stable_diffusion,
     generate_all_prompts,
 )
