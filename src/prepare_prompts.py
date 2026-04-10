@@ -2,7 +2,7 @@ from pathlib import Path
 import pickle
 
 from dataset import prepare_cifar10
-from diffusion_privacy_attacks.clip_utils import embed_directory, find_near_duplicates
+from clip_utils import embed_directory, find_near_duplicates
 
 
 # ==============================
