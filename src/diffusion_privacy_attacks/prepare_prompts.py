@@ -1,6 +1,6 @@
 from pathlib import Path
-from dataset import prepare_cifar10, score_duplicates_clip
-from clip_utils import embed_directory
+from dataset import prepare_cifar10
+from clip_utils import embed_directory, find_near_duplicates
 import pickle
 
 # ==============================
@@ -23,7 +23,8 @@ def main():
 
     # 3. Duplicate detection
     print("🔍 Finding duplicates...")
-    duplicate_counts = score_duplicates_clip(embeddings, cosine_threshold=0.9)
+    duplicate = find_near_duplicates(embeddings, cosine_threshold=0.9)
+    duplicate_counts = {k: len(v) for k, v in duplicates.items()}
 
     # save duplicate counts for evaluation
     with open("duplicate_counts.pkl", "wb") as f:
