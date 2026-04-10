@@ -104,46 +104,10 @@ def get_member_nonmember_images(
     return members, nonmembers
 
 
-# ---------------------------------------------------------------------------
-# LAION duplicate detection (§4.2)
-# ---------------------------------------------------------------------------
-
-def score_duplicates_clip(
-    embeddings: Dict[str, np.ndarray],
-    cosine_threshold: float = 0.9,
-) -> Dict[str, int]:
-    """
-    Count near-duplicates for each image using CLIP cosine similarity.
-
-    Paper §4.2: "We first embed each image to a 512-dimensional vector
-    using CLIP, and then perform the all-pairs comparison... We count two
-    examples as near-duplicates if their CLIP embeddings have a high
-    cosine similarity."
-
-    Returns dict mapping image_id → number of near-duplicates.
-    Expensive at scale; use FAISS for datasets >100k.
-    """
-    keys = list(embeddings.keys())
-    vecs = np.array([embeddings[k] for k in keys], dtype=np.float32)
-
-    # Normalise for cosine similarity
-    norms = np.linalg.norm(vecs, axis=1, keepdims=True) + 1e-8
-    vecs_norm = vecs / norms
-
-    duplicate_counts = {k: 0 for k in keys}
-    n = len(keys)
-
-    for i in range(n):
-        sims = vecs_norm @ vecs_norm[i]   # cosine similarities to image i
-        count = int((sims >= cosine_threshold).sum()) - 1   # exclude self
-        duplicate_counts[keys[i]] = count
-
-    return duplicate_counts
-
 
 def get_top_duplicated_prompts(
-    duplicate_counts: Dict[str, int],
-    captions: Dict[str, str],
+    duplicate_counts: Dict[Path, int],
+    captions: Dict[Path, str],
     top_k: int = 350_000,
 ) -> List[str]:
     """
