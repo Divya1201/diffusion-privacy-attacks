@@ -9,7 +9,7 @@ from typing import List, Optional
 import matplotlib.pyplot as plt
 from PIL import Image
 
-from diffusion_privacy_attacks.attack import AttackResult
+from attack import AttackResult
 
 
 def show_pair(
