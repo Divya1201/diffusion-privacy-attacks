@@ -3,7 +3,7 @@ import torch
 
 from diffusion_privacy_attacks.diffusion import (
     load_stable_diffusion,
-    generate_images_for_prompt,
+    generate_all_prompts,
 )
 
 # ==============================
@@ -36,17 +36,13 @@ def main():
 
     print("\n Generating images (500 per prompt as per paper)...")
 
-    for i, prompt in enumerate(PROMPTS):
-        print(f"\n[{i+1}/{len(PROMPTS)}] Prompt: {prompt}")
-
-        generate_images_for_prompt(
-            pipe=pipe,
-            prompt=prompt,
-            output_dir=OUTPUT_DIR,
-            num_images=IMAGES_PER_PROMPT,
-            image_size=512,
-            batch_size=BATCH_SIZE,   # Explicit batching control
-        )
+    generate_all_prompts(
+        pipe=pipe,
+        prompts=PROMPTS,
+        output_dir=OUTPUT_DIR,
+        num_images_per_prompt=IMAGES_PER_PROMPT,
+        batch_size=BATCH_SIZE,
+    )
 
     print("\n Generation complete!")
 
