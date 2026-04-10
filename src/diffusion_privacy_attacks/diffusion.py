@@ -92,6 +92,7 @@ def generate_all_prompts(
     prompts: List[str],
     output_dir: Path,
     num_images_per_prompt: int = 500,
+    batch_size=8,
 ) -> None:
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -103,6 +104,7 @@ def generate_all_prompts(
             prompt,
             output_dir,
             num_images=num_images_per_prompt,
+            batch_size=batch_size,
         )
 
     print("\n✅ All images generated.")
