@@ -20,6 +20,7 @@ from sklearn.metrics import roc_curve
 
 TIMESTEP = 100
 NUM_IMAGES = 500   
+NUM_MODELS_TO_USE = 16
 
 def load_cifar_diffusion_model(device="cpu"):
     pipe = DDPMPipeline.from_pretrained("google/ddpm-cifar10-32")
@@ -56,28 +57,32 @@ def main():
     member_losses = []
     nonmember_losses = []
 
-    print(" Computing diffusion losses...")
+    print(" Computing diffusion losses across multiple splits...")
 
-    # take first model for demo
-    members, nonmembers = splits[0]
+    for model_idx in range(NUM_MODELS_TO_USE):
+        print(f"\n Processing split/model {model_idx}...")
 
-    for idx in members[:NUM_IMAGES]:
-        path = image_dir / f"img_{idx:05d}_class{str(idx % 10)}.png"
-        img = load_image(path)
+        members, nonmembers = splits[model_idx]
 
-        loss = compute_diffusion_loss(
-            model, scheduler, img, timestep=TIMESTEP, device=device
-        )
-        member_losses.append(loss)
+        # Member Losses
+        for idx in members[:NUM_IMAGES]:
+            path = image_dir / f"img_{idx:05d}_class{str(idx % 10)}.png"
+            img = load_image(path)
 
-    for idx in nonmembers[:NUM_IMAGES]:
-        path = image_dir / f"img_{idx:05d}_class{str(idx % 10)}.png"
-        img = load_image(path)
+            loss = compute_diffusion_loss(
+                model, scheduler, img, timestep=TIMESTEP, device=device
+            )
+            member_losses.append(loss)
 
-        loss = compute_diffusion_loss(
-            model, scheduler, img, timestep=TIMESTEP, device=device
-        )
-        nonmember_losses.append(loss)
+        # Non-Member Losses
+        for idx in nonmembers[:NUM_IMAGES]:
+            path = image_dir / f"img_{idx:05d}_class{str(idx % 10)}.png"
+            img = load_image(path)
+
+            loss = compute_diffusion_loss(
+                model, scheduler, img, timestep=TIMESTEP, device=device
+            )
+            nonmember_losses.append(loss)
 
     # ----------------------------
     # SAVE LOSSES (IMPORTANT)
