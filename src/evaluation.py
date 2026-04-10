@@ -5,8 +5,8 @@ from sklearn.metrics import precision_recall_curve, roc_curve
 
 import pickle 
 
-from diffusion_privacy_attacks.visualize import show_top_results
-from diffusion_privacy_attacks.attack import AttackResult
+from visualize import show_top_results
+from attack import AttackResult
 
 df = pd.read_csv("attack_results.csv")
 print(df.head())
