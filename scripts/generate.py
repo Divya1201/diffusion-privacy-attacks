@@ -1,9 +1,13 @@
 from pathlib import Path
 import torch
-from diffusion_privacy_attacks.diffusion import load_stable_diffusion, generate_images_for_prompt
+
+from diffusion_privacy_attacks.diffusion import (
+    load_stable_diffusion,
+    generate_images_for_prompt,
+)
 
 # ==============================
-# CONFIG (Paper settings)
+# CONFIG 
 # ==============================
 
 OUTPUT_DIR = Path("outputs/generated")
@@ -15,17 +19,23 @@ PROMPTS = [
     "Coca Cola logo",
 ]
 
-IMAGES_PER_PROMPT = 500   # 🔥 CRITICAL (paper requirement)
+IMAGES_PER_PROMPT = 500   # REQUIRED (paper: 500 generations)
+
+BATCH_SIZE = 8            # GPU: 6–8 | CPU: 2–4
 
 # ==============================
 # MAIN
 # ==============================
 
 def main():
-    print("🚀 Loading Stable Diffusion v1.4 (PLMS)...")
+    print("Loading Stable Diffusion v1.4 (PLMS)...")
+
     pipe = load_stable_diffusion()
 
-    print("\n📸 Generating images (paper setting: 500 per prompt)...")
+    device = pipe.device
+    print(f" Running on: {device}")
+
+    print("\n Generating images (500 per prompt as per paper)...")
 
     for i, prompt in enumerate(PROMPTS):
         print(f"\n[{i+1}/{len(PROMPTS)}] Prompt: {prompt}")
@@ -34,11 +44,12 @@ def main():
             pipe=pipe,
             prompt=prompt,
             output_dir=OUTPUT_DIR,
-            num_images=IMAGES_PER_PROMPT,  # 🔥 KEY FIX
-            image_size=512,               # paper: 512×512
+            num_images=IMAGES_PER_PROMPT,
+            image_size=512,
+            batch_size=BATCH_SIZE,   # Explicit batching control
         )
 
-    print("\n✅ Generation complete!")
+    print("\n Generation complete!")
 
 
 if __name__ == "__main__":
