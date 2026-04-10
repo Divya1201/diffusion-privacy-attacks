@@ -10,31 +10,20 @@ from membership_inference import (
     LiRAAttack,
 )
 
+from diffusers import DDPMPipeline
+
+
 # ==============================
 # CONFIG
 # ==============================
 
 TIMESTEP = 100
-NUM_IMAGES = 100   # reduce for feasibility
+NUM_IMAGES = 500   
 
-# ==============================
-# DUMMY MODEL (for structure)
-# ==============================
-
-class DummyModel:
-    def eval(self):
-        return self
-
-    def __call__(self, x, t):
-        class Output:
-            sample = torch.randn_like(x)
-        return Output()
-
-
-class DummyScheduler:
-    def add_noise(self, x, noise, t):
-        return x + noise
-
+def load_cifar_diffusion_model(device="cpu"):
+    pipe = DDPMPipeline.from_pretrained("google/ddpm-cifar10-32")
+    pipe = pipe.to(device)
+    return pipe.unet, pipe.scheduler
 
 # ==============================
 # IMAGE LOADING
@@ -52,13 +41,16 @@ def load_image(path):
 # ==============================
 
 def main():
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
     print(" Preparing dataset...")
     image_dir = prepare_cifar10(Path("data"))
 
+    print(" Generating CIFAR splits...")
     splits = generate_cifar10_splits()
 
-    model = DummyModel()
-    scheduler = DummyScheduler()
+    print(" Loading pretrained CIFAR diffusion model...")
+    model, scheduler = load_cifar_diffusion_model(device)
 
     member_losses = []
     nonmember_losses = []
@@ -73,7 +65,7 @@ def main():
         img = load_image(path)
 
         loss = compute_diffusion_loss(
-            model, scheduler, img, timestep=TIMESTEP
+            model, scheduler, img, timestep=TIMESTEP, device=device
         )
         member_losses.append(loss)
 
@@ -82,10 +74,18 @@ def main():
         img = load_image(path)
 
         loss = compute_diffusion_loss(
-            model, scheduler, img, timestep=TIMESTEP
+            model, scheduler, img, timestep=TIMESTEP, device=device
         )
         nonmember_losses.append(loss)
 
+    # ----------------------------
+    # SAVE LOSSES (IMPORTANT)
+    # ----------------------------
+    np.save("member_losses.npy", np.array(member_losses))
+    np.save("nonmember_losses.npy", np.array(nonmember_losses))
+
+    print(" Saved losses for evaluation")
+    
     # ----------------------------
     # Threshold attack
     # ----------------------------
