@@ -23,7 +23,7 @@ def main():
 
     # 3. Duplicate detection
     print("🔍 Finding duplicates...")
-    duplicate = find_near_duplicates(embeddings, cosine_threshold=0.9)
+    duplicates = find_near_duplicates(embeddings, cosine_threshold=0.9)
     duplicate_counts = {k: len(v) for k, v in duplicates.items()}
 
     # save duplicate counts for evaluation
