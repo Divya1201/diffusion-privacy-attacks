@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_curve, roc_curve
 
@@ -58,6 +59,30 @@ plt.yscale("log")
 plt.xlabel("FPR")
 plt.ylabel("TPR")
 plt.title("ROC Curve (Membership Inference)")
+plt.grid()
+plt.show()
+
+# ROC Curve (for 16 diffusion models - CIFAR)
+
+member_losses = np.load("member_losses.npy")
+nonmember_losses = np.load("nonmember_losses.npy")
+
+labels = np.concatenate([
+    np.ones(len(member_losses)),
+    np.zeros(len(nonmember_losses))
+])
+
+scores = -np.concatenate([member_losses, nonmember_losses])
+
+fpr, tpr, _ = roc_curve(labels, scores)
+
+plt.figure()
+plt.plot(fpr, tpr)
+plt.xscale("log")
+plt.yscale("log")
+plt.xlabel("FPR")
+plt.ylabel("TPR")
+plt.title("Membership Inference ROC (CIFAR)")
 plt.grid()
 plt.show()
 
