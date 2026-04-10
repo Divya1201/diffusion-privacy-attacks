@@ -12,12 +12,11 @@ from diffusion_privacy_attacks.diffusion import (
 
 OUTPUT_DIR = Path("outputs/generated")
 
-PROMPTS = [
-    "Mona Lisa painting",
-    "Nike logo",
-    "Apple logo",
-    "Coca Cola logo",
-]
+def load_prompts(file="prompts.txt"):
+    with open(file, "r") as f:
+        return [line.strip() for line in f.readlines()]
+
+PROMPTS = load_prompts()
 
 IMAGES_PER_PROMPT = 500   # REQUIRED (paper: 500 generations)
 
