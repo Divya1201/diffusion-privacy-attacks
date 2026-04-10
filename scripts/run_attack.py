@@ -35,9 +35,9 @@ import argparse
 import csv
 from pathlib import Path
 
-from diffusion_privacy_attacks.attack import AttackConfig, AttackResult, run_extraction_attack
-from diffusion_privacy_attacks.dataset import prepare_cifar10
-from diffusion_privacy_attacks.visualize import show_pair, show_top_results
+from attack import AttackConfig, AttackResult, run_extraction_attack
+from dataset import prepare_cifar10
+from visualize import show_pair, show_top_results
 
 
 # =============================================================================
