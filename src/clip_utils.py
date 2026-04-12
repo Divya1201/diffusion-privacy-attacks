@@ -40,7 +40,7 @@ def get_clip_embedding(image_path: Path) -> np.ndarray:
 
 def embed_directory(
     directory: Path,
-    image_size: int = 512,   # unused here — CLIP handles its own resize
+    image_size: int = 512,
 ) -> Dict[Path, np.ndarray]:
     """
     Embed all images in a directory.
@@ -52,10 +52,17 @@ def embed_directory(
     paths = sorted(paths)
 
     embeddings: Dict[Path, np.ndarray] = {}
+
     for i, p in enumerate(paths):
-        embeddings[p] = get_clip_embedding(p)
+        try:
+            embeddings[p] = get_clip_embedding(p)
+        except Exception as e:
+            print(f" Skipping {p}: {e}")
+            continue
+
         if (i + 1) % 100 == 0:
             print(f"  Embedded {i+1}/{len(paths)}")
+
     return embeddings
 
 
