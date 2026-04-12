@@ -60,6 +60,7 @@ def main():
     print(" Computing diffusion losses across multiple splits...")
 
     for model_idx in range(NUM_MODELS_TO_USE):
+        torch.manual_seed(model_idx)
         print(f"\n Processing split/model {model_idx}...")
 
         members, nonmembers = splits[model_idx]
@@ -104,45 +105,58 @@ def main():
     print(f"FPR: {fpr:.4f}")
 
     # ----------------------------
-    # LiRA attack
+    # LiRA attack (CORRECT VERSION)
     # ----------------------------
-    print("\n Running LiRA (per-sample approximation)...")
+    print("\n Running LiRA (distribution-based)...")
 
     lira = LiRAAttack(member_losses, nonmember_losses)
 
-    correct = 0
-    total = min(50, len(member_losses))  # evaluate on subset
+    # Compute LiRA scores for ALL samples
+    member_scores = [lira.score(loss) for loss in member_losses]
+    nonmember_scores = [lira.score(loss) for loss in nonmember_losses]
 
-    for i in range(total):
-        loss = member_losses[i]
-        pred = lira.predict(loss)
-        if pred == 1:
-            correct += 1
+    # Convert to numpy
+    member_scores = np.array(member_scores)
+    nonmember_scores = np.array(nonmember_scores)
 
-    print(f"LiRA Accuracy (members): {correct}/{total} = {correct/total:.3f}")
-
-    print(f"LiRA score: {score:.4f}")
-    print(f"Prediction: {'member' if score > 0 else 'non-member'}")
-
+    # Labels
     labels = np.concatenate([
-        np.ones(len(member_losses)),
-        np.zeros(len(nonmember_losses))
+        np.ones(len(member_scores)),
+        np.zeros(len(nonmember_scores))
     ])
 
-    scores = -np.concatenate([member_losses, nonmember_losses])
+    # Combine scores
+    scores = np.concatenate([member_scores, nonmember_scores])
 
+    # ----------------------------
+    # Accuracy
+    # ----------------------------
+    preds = (scores > 0).astype(int)
+    accuracy = (preds == labels).mean()
+
+    print(f"LiRA Accuracy: {accuracy:.4f}")
+
+    # ----------------------------
+    # Score statistics (VERY USEFUL)
+    # ----------------------------
+    print(f"Mean member score: {member_scores.mean():.4f}")
+    print(f"Mean non-member score: {nonmember_scores.mean():.4f}")
+
+    # ----------------------------
+    # ROC Curve (LiRA)
+    # ----------------------------
     fpr, tpr, _ = roc_curve(labels, scores)
 
     plt.figure()
-    plt.plot(fpr, tpr)
+    plt.plot(fpr, tpr, label="LiRA")
     plt.xscale("log")
     plt.yscale("log")
     plt.xlabel("FPR")
     plt.ylabel("TPR")
-    plt.title("Membership Inference ROC (CIFAR)")
+    plt.title("LiRA ROC Curve")
     plt.grid()
+    plt.legend()
     plt.show()
-
 
 if __name__ == "__main__":
     main()
