@@ -59,36 +59,46 @@ def embed_directory(
     return embeddings
 
 
-def cosine_similarity_matrix(
-    embeddings: Dict[Path, np.ndarray],
-) -> tuple[np.ndarray, list[Path]]:
-    """
-    Compute the full N×N cosine similarity matrix for fast duplicate detection.
-    Returns (matrix, ordered_paths).
-    """
-    paths = sorted(embeddings.keys())
-    vecs = np.stack([embeddings[p] for p in paths])   # already unit-normalised
-    sim_matrix = vecs @ vecs.T
-    return sim_matrix.astype(np.float32), paths
-
-
 def find_near_duplicates(
     embeddings: Dict[Path, np.ndarray],
     cosine_threshold: float = 0.9,
+    batch_size: int = 1000,
 ) -> Dict[Path, List[Path]]:
     """
-    Find all near-duplicate pairs using CLIP cosine similarity ≥ threshold.
-    Paper §4.2: "count two examples as near-duplicates if their CLIP embeddings
-    have a high cosine similarity."
+    Efficient block-wise duplicate detection using cosine similarity.
+    Avoids full NxN matrix computation.
     """
-    sim_matrix, paths = cosine_similarity_matrix(embeddings)
-    n = len(paths)
+
+    print(" Using block-wise cosine similarity search...")
+
+    paths = sorted(embeddings.keys())
+    vecs = np.stack([embeddings[p] for p in paths])  # already normalized
+
+    n = len(vecs)
     duplicates: Dict[Path, List[Path]] = {p: [] for p in paths}
 
-    for i in range(n):
-        for j in range(i + 1, n):
-            if sim_matrix[i, j] >= cosine_threshold:
-                duplicates[paths[i]].append(paths[j])
-                duplicates[paths[j]].append(paths[i])
+    for i in range(0, n, batch_size):
+        end = min(i + batch_size, n)
+        print(f"Processing batch {i} → {end} / {n}")
+
+        batch = vecs[i:end]  # (batch_size × 512)
+
+        # Compute similarity (batch vs all)
+        sims = batch @ vecs.T   # (batch_size × n)
+
+        for bi in range(batch.shape[0]):
+            idx_i = i + bi
+
+            # Get all indices above threshold
+            similar_indices = np.where(sims[bi] >= cosine_threshold)[0]
+
+            for idx_j in similar_indices:
+                # Avoid duplicate/self comparisons
+                if idx_j > idx_i:
+                    p1 = paths[idx_i]
+                    p2 = paths[idx_j]
+
+                    duplicates[p1].append(p2)
+                    duplicates[p2].append(p1)
 
     return duplicates
