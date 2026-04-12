@@ -24,14 +24,16 @@ def main():
     # --------------------------------
     # (Optional) CLIP duplicate analysis
     # --------------------------------
-    print("📦 Preparing dataset...")
+    print(" Preparing dataset...")
     image_dir = prepare_cifar10(Path("data"))
 
-    print("🧠 Embedding images with CLIP...")
+    print(" Embedding images with CLIP...")
     embeddings = embed_directory(image_dir)
-
-    print("🔍 Finding duplicates...")
-    duplicates = find_near_duplicates(embeddings, cosine_threshold=0.9)
+    
+    print(f" Total embeddings: {len(embeddings)}")
+    
+    print(" Finding duplicates (Block-wise)...")
+    duplicates = find_near_duplicates(embeddings, cosine_threshold=0.9, batch_size=1000)
 
     duplicate_counts = {k: len(v) for k, v in duplicates.items()}
 
@@ -39,14 +41,14 @@ def main():
     with open("duplicate_counts.pkl", "wb") as f:
         pickle.dump(duplicate_counts, f)
 
-    print("✅ Saved duplicate counts to duplicate_counts.pkl")
+    print(" Saved duplicate counts to duplicate_counts.pkl")
 
     # --------------------------------
     # USE PAPER PROMPTS (NOT CIFAR)
     # --------------------------------
-    print("\n🔥 USING PAPER PROMPTS:")
+    print("\n USING PAPER PROMPTS:")
     for p in PAPER_PROMPTS:
-        print(p)
+        print(f" - {p}")
 
     # Save prompts
     output_file = Path("prompts.txt")
