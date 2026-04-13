@@ -14,9 +14,9 @@ PAPER_PROMPTS = [
     "Nike logo",
     "Apple logo",
     "Coca Cola logo",
-    "Starbucks logo",
-    "McDonald's logo",
-    "Google logo",
+    #"Starbucks logo",
+    #"McDonald's logo",
+    #"Google logo",
 ]
 
 
