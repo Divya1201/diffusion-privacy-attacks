@@ -56,17 +56,26 @@ def compute_metrics(results: Optional[Dict[str, Any]]) -> Optional[Dict[str, flo
     if results is None:
         return None
 
-    try:
-        avg_duplicates = float(results["avg_duplicates"])
-        total_embeddings = int(results["total_embeddings"])
-    except (KeyError, TypeError, ValueError) as exc:
-        print(f"[WARNING] Could not extract metrics: {exc}")
-        return None
+    if isinstance(results, list):
+        if len(results) == 0:
+            return None
 
-    return {
-        "avg_duplicates": avg_duplicates,
-        "total_embeddings": total_embeddings,
-    }
+        extracted = [r for r in results if r.extracted]
+
+        return {
+            "avg_duplicates": len(extracted),
+            "total_embeddings": len(results),
+        }
+
+    # fallback (old format)
+    try:
+        return {
+            "avg_duplicates": float(results["avg_duplicates"]),
+            "total_embeddings": int(results["total_embeddings"]),
+        }
+    except Exception as e:
+        print(f"[WARNING] Could not extract metrics: {e}")
+        return None
 
 
 def plot_results(
