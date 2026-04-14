@@ -19,8 +19,8 @@ from sklearn.metrics import roc_curve
 # ==============================
 
 TIMESTEP = 100
-NUM_IMAGES = 500   
-NUM_MODELS_TO_USE = 16
+NUM_IMAGES = 50     #500   
+NUM_MODELS_TO_USE = 2     #16
 
 def load_cifar_diffusion_model(device="cpu"):
     pipe = DDPMPipeline.from_pretrained("google/ddpm-cifar10-32")
@@ -46,7 +46,8 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
     print(" Preparing dataset...")
-    image_dir = prepare_cifar10(Path("data"))
+    image_dir = prepare_cifar10(Path("data"), num_images=1000)
+    #image_dir = prepare_cifar10(Path("data"))
 
     print(" Generating CIFAR splits...")
     splits = generate_cifar10_splits()
