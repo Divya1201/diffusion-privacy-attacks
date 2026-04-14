@@ -25,7 +25,8 @@ def main():
     # (Optional) CLIP duplicate analysis
     # --------------------------------
     print(" Preparing dataset...")
-    image_dir = prepare_cifar10(Path("data"))
+    image_dir = prepare_cifar10(Path("data"), num_images=1000)
+    #image_dir = prepare_cifar10(Path("data"))
 
     print(" Embedding images with CLIP...")
     embeddings = embed_directory(image_dir)
@@ -56,7 +57,7 @@ def main():
         for p in PAPER_PROMPTS:
             f.write(p + "\n")
 
-    print(f"\n✅ Saved prompts to {output_file}")
+    print(f"\n Saved prompts to {output_file}")
 
 
 if __name__ == "__main__":
