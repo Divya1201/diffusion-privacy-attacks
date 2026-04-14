@@ -55,6 +55,8 @@ def main():
     print(" Loading pretrained CIFAR diffusion model...")
     model, scheduler = load_cifar_diffusion_model(device)
 
+    all_images = sorted(image_dir.glob("img_*.png"))
+    
     member_losses = []
     nonmember_losses = []
 
@@ -68,7 +70,10 @@ def main():
 
         # Member Losses
         for idx in members[:NUM_IMAGES]:
-            path = image_dir / f"img_{idx:05d}_class{str(idx % 10)}.png"
+            if idx >= len(all_images):
+                continue  # safety check
+
+            path = all_images[idx]
             img = load_image(path)
 
             loss = compute_diffusion_loss(
@@ -78,7 +83,10 @@ def main():
 
         # Non-Member Losses
         for idx in nonmembers[:NUM_IMAGES]:
-            path = image_dir / f"img_{idx:05d}_class{str(idx % 10)}.png"
+            if idx >= len(all_images):
+                continue  # safety check
+
+            path = all_images[idx]
             img = load_image(path)
 
             loss = compute_diffusion_loss(
