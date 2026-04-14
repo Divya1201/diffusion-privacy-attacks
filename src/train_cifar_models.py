@@ -25,7 +25,8 @@ def prepare_cifar_splits():
     """
 
     print(" Preparing CIFAR-10 dataset...")
-    image_dir = prepare_cifar10(Path("data"))
+    image_dir = prepare_cifar10(Path("data"), num_images=1000)
+    #image_dir = prepare_cifar10(Path("data"))
 
     print(" Generating dataset splits...")
     splits = generate_cifar10_splits(n_models=NUM_MODELS)
