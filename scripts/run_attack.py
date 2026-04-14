@@ -180,8 +180,9 @@ def main() -> None:
 
     # ── CIFAR-10 shortcut (§5) ────────────────────────────────────────────────
     if args.use_cifar:
-        print("📦 Preparing CIFAR-10 dataset...")
-        args.reference_dir = prepare_cifar10(Path("data"))
+        print(" Preparing CIFAR-10 dataset...")
+        args.reference_dir = prepare_cifar10(Path("data"), num_images=1000)
+        #args.reference_dir = prepare_cifar10(Path("data"))
         if args.generated_dir is None:
             raise ValueError(
                 "--generated-dir must still be provided even with --use-cifar. "
@@ -202,7 +203,7 @@ def main() -> None:
         extraction_delta=args.extraction_delta,
     )
 
-    print("🚀 Running memorisation extraction attack (Carlini et al. 2023 §4.2.1)")
+    print(" Running memorisation extraction attack (Carlini et al. 2023 §4.2.1)")
     print(f"   Generated dir : {args.generated_dir}")
     print(f"   Reference dir : {args.reference_dir}")
     print(f"   Image size    : {config.image_size}×{config.image_size}")
@@ -218,7 +219,7 @@ def main() -> None:
     )
 
     if not results:
-        print("⚠️  No suspicious samples found — try lowering --clique-min-size or --patch-l2-threshold.")
+        print("  No suspicious samples found — try lowering --clique-min-size or --patch-l2-threshold.")
         return
 
     # ── Console summary ───────────────────────────────────────────────────────
@@ -228,7 +229,7 @@ def main() -> None:
     print(f"  Extracted (Def. 1, δ={config.extraction_delta}) : {len(extracted)}")
     print(f"{'='*60}")
 
-    print("\n📋 TOP SUSPICIOUS SAMPLES (sorted by adaptive L2 score ↑):")
+    print("\n TOP SUSPICIOUS SAMPLES (sorted by adaptive L2 score ↑):")
     for r in results[:5]:
         print(
             f"  {r.query_path.name} → {r.match_path.name}"
@@ -264,7 +265,7 @@ def main() -> None:
                 result.extracted,
             ])
 
-    print(f"\n✅ Saved {len(results)} rows → {args.output}")
+    print(f"\n Saved {len(results)} rows → {args.output}")
 
     # ── Visualisation (Figure 3 style) ────────────────────────────────────────
     if args.show_top > 0:
