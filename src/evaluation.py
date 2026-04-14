@@ -70,7 +70,7 @@ results = []
 for _, row in df.iterrows():
     results.append(
         AttackResult(
-            query_path=row["query_path"],
+            query_path=Path(row["query_path"]),
             match_path=row["match_path"],
             l2_norm=row["l2_norm"],
             mean_clique_dist=row["mean_clique_dist"],
