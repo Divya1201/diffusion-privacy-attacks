@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 run_attack.py — CLI entry-point for the generate-and-filter extraction pipeline.
 
@@ -33,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import pickle
 from pathlib import Path
 
 from attack import AttackConfig, AttackResult, run_extraction_attack
@@ -211,7 +211,7 @@ def main() -> None:
     print(f"   Patch-L2 τ    : {config.patch_l2_threshold}")
     print(f"   Extraction δ  : {config.extraction_delta}")
 
-    # ── Run the pipeline ──────────────────────────────────────────────────────
+    # ── Run the attack ──────────────────────────────────────────────────────
     results: list[AttackResult] = run_extraction_attack(
         generated_dir=args.generated_dir,
         reference_dir=args.reference_dir,
@@ -267,9 +267,15 @@ def main() -> None:
 
     print(f"\n Saved {len(results)} rows → {args.output}")
 
+
+    with open("results_normal.pkl", "wb") as f:
+        pickle.dump(results, f)
+
+    print(" Saved results_normal.pkl")
+
     # ── Visualisation (Figure 3 style) ────────────────────────────────────────
     if args.show_top > 0:
-        print(f"\n🖼  Displaying top {args.show_top} (generated, match) pairs...")
+        print(f"\n  Displaying top {args.show_top} (generated, match) pairs...")
         for r in results[: args.show_top]:
             title = (
                 f"L2={r.l2_norm:.4f}  score={r.adaptive_score:.4f}"
@@ -278,7 +284,7 @@ def main() -> None:
             show_pair(r.query_path, r.match_path, title=title)
 
     if args.show_grid:
-        print("\n🖼  Displaying extracted-image grid...")
+        print("\n  Displaying extracted-image grid...")
         show_top_results(results, n=9, only_extracted=True)
 
 
