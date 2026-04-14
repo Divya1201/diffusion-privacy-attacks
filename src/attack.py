@@ -106,7 +106,7 @@ def _iter_images(directory: Path) -> List[Path]:
     """Return sorted list of image paths in a directory."""
     paths: List[Path] = []
     for suffix in ("*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp"):
-        paths.extend(directory.glob(suffix))
+        paths.extend(directory.rglob(suffix))   
     return sorted(paths)
 
 
