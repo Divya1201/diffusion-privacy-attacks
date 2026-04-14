@@ -7,12 +7,12 @@ from dataset import generate_cifar10_splits, prepare_cifar10
 from membership_inference import (
     compute_diffusion_loss,
     loss_threshold_attack,
-    LiRAAttack,
 )
 
 from diffusers import DDPMPipeline
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve
+from scipy.stats import norm
 
 # ==============================
 # CONFIG
@@ -22,10 +22,7 @@ TIMESTEP = 100
 NUM_IMAGES = 50     #500   
 NUM_MODELS_TO_USE = 2     #16
 
-def load_cifar_diffusion_model(device="cpu"):
-    pipe = DDPMPipeline.from_pretrained("google/ddpm-cifar10-32")
-    pipe = pipe.to(device)
-    return pipe.unet, pipe.scheduler
+MODEL_DIR = Path("models")
 
 # ==============================
 # IMAGE LOADING
@@ -50,79 +47,86 @@ def main():
     #image_dir = prepare_cifar10(Path("data"))
 
     print(" Generating CIFAR splits...")
-    splits = generate_cifar10_splits()
-
-    print(" Loading pretrained CIFAR diffusion model...")
-    model, scheduler = load_cifar_diffusion_model(device)
+    splits = generate_cifar10_splits(n_models=NUM_MODELS_TO_USE)
 
     all_images = sorted(image_dir.glob("img_*.png"))
     
-    member_losses = []
-    nonmember_losses = []
+    # ----------------------------
+    # Load trained models
+    # ----------------------------
+    print(" Loading trained shadow models...")
 
-    print(" Computing diffusion losses across multiple splits...")
+    models = []
+    for i in range(NUM_MODELS_TO_USE):
+        model_path = MODEL_DIR / f"model_{i}"
+        pipe = DDPMPipeline.from_pretrained(model_path)
+        pipe = pipe.to(device)
+        models.append((pipe.unet, pipe.scheduler))
 
-    for model_idx in range(NUM_MODELS_TO_USE):
-        torch.manual_seed(model_idx)
-        print(f"\n Processing split/model {model_idx}...")
+    # ----------------------------
+    # Compute IN / OUT losses
+    # ----------------------------
+    print(" Computing IN / OUT losses (TRUE LiRA)...")
 
-        members, nonmembers = splits[model_idx]
+    in_losses = []
+    out_losses = []
 
-        # Member Losses
-        for idx in members[:NUM_IMAGES]:
-            if idx >= len(all_images):
-                continue  # safety check
+    for img_idx in range(NUM_IMAGES):
+        path = all_images[img_idx]
+        img = load_image(path)
 
-            path = all_images[idx]
-            img = load_image(path)
+        for model_idx, (model, scheduler) in enumerate(models):
+            members, nonmembers = splits[model_idx]
 
             loss = compute_diffusion_loss(
                 model, scheduler, img, timestep=TIMESTEP, device=device
             )
-            member_losses.append(loss)
 
-        # Non-Member Losses
-        for idx in nonmembers[:NUM_IMAGES]:
-            if idx >= len(all_images):
-                continue  # safety check
+            if img_idx in members:
+                in_losses.append(loss)
+            else:
+                out_losses.append(loss)
 
-            path = all_images[idx]
-            img = load_image(path)
+    in_losses = np.array(in_losses)
+    out_losses = np.array(out_losses)
 
-            loss = compute_diffusion_loss(
-                model, scheduler, img, timestep=TIMESTEP, device=device
-            )
-            nonmember_losses.append(loss)
+    print(f"IN samples: {len(in_losses)}")
+    print(f"OUT samples: {len(out_losses)}")
 
-    # ----------------------------
-    # SAVE LOSSES (IMPORTANT)
-    # ----------------------------
-    np.save("member_losses.npy", np.array(member_losses))
-    np.save("nonmember_losses.npy", np.array(nonmember_losses))
-
-    print(" Saved losses for evaluation")
+    
     
     # ----------------------------
     # Threshold attack
     # ----------------------------
     print("\n Running threshold attack...")
 
-    tau, tpr, fpr = loss_threshold_attack(member_losses, nonmember_losses)
+    tau, tpr, fpr = loss_threshold_attack(in_losses, out_losses)
 
     print(f"Threshold: {tau:.4f}")
     print(f"TPR: {tpr:.4f}")
     print(f"FPR: {fpr:.4f}")
 
     # ----------------------------
-    # LiRA attack (CORRECT VERSION)
+    # LiRA attack 
     # ----------------------------
-    print("\n Running LiRA (distribution-based)...")
+    print("\n Running LiRA...")
 
-    lira = LiRAAttack(member_losses, nonmember_losses)
+    # Fit Gaussian distributions
+    mu_in, std_in = np.mean(in_losses), np.std(in_losses)
+    mu_out, std_out = np.mean(out_losses), np.std(out_losses)
+
+    print(f"IN dist: mean={mu_in:.4f}, std={std_in:.4f}")
+    print(f"OUT dist: mean={mu_out:.4f}, std={std_out:.4f}")
+
+    # Likelihood ratio
+    def lira_score(loss):
+        p_in = norm.pdf(loss, mu_in, std_in + 1e-8)
+        p_out = norm.pdf(loss, mu_out, std_out + 1e-8)
+        return np.log(p_in + 1e-12) - np.log(p_out + 1e-12)
 
     # Compute LiRA scores for ALL samples
-    member_scores = [lira.score(loss) for loss in member_losses]
-    nonmember_scores = [lira.score(loss) for loss in nonmember_losses]
+    member_scores = [lira_score(loss) for loss in in_losses]
+    nonmember_scores = [lira_score(loss) for loss in out_losses]
 
     # Convert to numpy
     member_scores = np.array(member_scores)
@@ -146,7 +150,7 @@ def main():
     print(f"LiRA Accuracy: {accuracy:.4f}")
 
     # ----------------------------
-    # Score statistics (VERY USEFUL)
+    # Score statistics 
     # ----------------------------
     print(f"Mean member score: {member_scores.mean():.4f}")
     print(f"Mean non-member score: {nonmember_scores.mean():.4f}")
