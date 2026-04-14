@@ -47,9 +47,12 @@ def main():
     #image_dir = prepare_cifar10(Path("data"))
 
     print(" Generating CIFAR splits...")
-    splits = generate_cifar10_splits(n_models=NUM_MODELS_TO_USE)
-
     all_images = sorted(image_dir.glob("img_*.png"))
+
+    splits = generate_cifar10_splits(
+        n_models=NUM_MODELS_TO_USE,
+        total_images=len(all_images)   
+    )
     
     # ----------------------------
     # Load trained models
