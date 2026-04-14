@@ -6,9 +6,9 @@ from dataset import prepare_cifar10, generate_cifar10_splits
 # CONFIG
 # ==============================
 
-NUM_MODELS = 16
+NUM_MODELS = 2 #16
 OUTPUT_DIR = Path("cifar_models")
-MAX_IMAGES_PER_MODEL = 5000  
+MAX_IMAGES_PER_MODEL = 200 #5000  
 
 
 # ==============================
