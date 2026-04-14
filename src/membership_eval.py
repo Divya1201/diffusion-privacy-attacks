@@ -78,9 +78,10 @@ def main():
         path = all_images[img_idx]
         img = load_image(path)
 
+        idx = int(path.stem.split("_")[1])
         for model_idx, (model, scheduler) in enumerate(models):
             members, nonmembers = splits[model_idx]
-
+            
             loss = compute_diffusion_loss(
                 model, scheduler, img, timestep=TIMESTEP, device=device
             )
