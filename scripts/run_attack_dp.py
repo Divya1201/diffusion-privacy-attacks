@@ -60,6 +60,7 @@ def dp_lora_mechanism(
     C: float = 0.5,          # IMPORTANT: <1 so clipping works
     sigma: float = 0.05,
     rank: int = 8,
+    seed: int = 0, 
 ) -> Dict[Path, np.ndarray]:
 
     paths = list(embeddings.keys())
@@ -68,6 +69,7 @@ def dp_lora_mechanism(
     # --------------------------------
     # 1. Apply LoRA (NO normalization before clipping)
     # --------------------------------
+    np.random.seed(seed) 
     adapter = LoRAAdapter(dim=vecs.shape[1], rank=rank)
     vecs_lora = np.array([adapter.forward(v) for v in vecs])
 
@@ -159,6 +161,7 @@ def main():
             C=args.c,
             sigma=sigma,
             rank=args.rank,
+            seed=args.seed,
         )
 
         # --------------------------------
