@@ -136,7 +136,7 @@ def main():
     # --------------------------------
     # Embed GENERATED images 
     # --------------------------------
-    cache_file = Path("clip_embeddings.pkl")
+    cache_file = Path(f"clip_embeddings_{args.generated_dir.name}.pkl")
 
     if cache_file.exists():
         print(" Loading cached CLIP embeddings...")
