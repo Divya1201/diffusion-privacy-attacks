@@ -1,58 +1,137 @@
 from pathlib import Path
 import shutil
-from dataset import prepare_cifar10, generate_cifar10_splits
+import torch
+from torchvision import transforms
+from torchvision.datasets import CIFAR10
+from torch.utils.data import DataLoader, Subset
+
+from diffusers import UNet2DModel, DDPMScheduler, DDPMPipeline
+from dataset import generate_cifar10_splits
 
 # ==============================
 # CONFIG
 # ==============================
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+BATCH_SIZE = 64
+EPOCHS = 3        #300
 NUM_MODELS = 2 #16
-OUTPUT_DIR = Path("cifar_models")
-MAX_IMAGES_PER_MODEL = 200 #5000  
+MAX_IMAGES_PER_MODEL = 50 #5000  
+
+SAVE_DIR = Path("models")
+SAVE_DIR.mkdir(exist_ok=True)
+
+# ==============================
+# DATASET
+# ==============================
+
+transform = transforms.Compose([
+    transforms.ToTensor(),
+])
+
+dataset = CIFAR10(
+    root="data",
+    train=True,
+    download=True,
+    transform=transform
+)
+
+# IMPORTANT: SAME SPLITS AS MEMBERSHIP EVAL
+splits = generate_cifar10_splits(n_models=NUM_MODELS)
+
+# ==============================
+# TRAIN FUNCTION
+# ==============================
+
+def train_model(model_idx, member_indices):
+    print(f"\n Training model {model_idx}...")
+
+    # Limit dataset size (important for speed)
+    member_indices = member_indices[:MAX_IMAGES_PER_MODEL]
+
+    subset = Subset(dataset, member_indices)
+    loader = DataLoader(subset, batch_size=BATCH_SIZE, shuffle=True)
+
+    # Diffusion model (DDPM UNet)
+    model = UNet2DModel(
+        sample_size=32,
+        in_channels=3,
+        out_channels=3,
+        layers_per_block=2,
+        block_out_channels=(64, 128, 128, 256),  # (128, 128, 256, 256)
+        down_block_types=(
+            "DownBlock2D",
+            "DownBlock2D",
+            "DownBlock2D",
+            "DownBlock2D",
+        ),
+        up_block_types=(
+            "UpBlock2D",
+            "UpBlock2D",
+            "UpBlock2D",
+            "UpBlock2D",
+        ),
+    ).to(DEVICE)
+
+    scheduler = DDPMScheduler(num_train_timesteps=500)    #1000
+
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+
+    # ==============================
+    # TRAIN LOOP
+    # ==============================
+
+    for epoch in range(EPOCHS):
+        epoch_loss = 0.0
+
+        for images, _ in loader:
+            images = images.to(DEVICE)
+
+            noise = torch.randn_like(images)
+            timesteps = torch.randint(
+                0, 1000, (images.size(0),), device=DEVICE
+            )
+
+            noisy_images = scheduler.add_noise(images, noise, timesteps)
+
+            noise_pred = model(noisy_images, timesteps).sample
+
+            loss = torch.nn.functional.mse_loss(noise_pred, noise)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            epoch_loss += loss.item()
+
+        avg_loss = epoch_loss / len(loader)
+        print(f"Epoch {epoch+1}/{EPOCHS} | Loss: {avg_loss:.4f}")
+
+    # ==============================
+    # SAVE MODEL
+    # ==============================
+
+    model_dir = SAVE_DIR / f"model_{model_idx}"
+    model_dir.mkdir(exist_ok=True)
+
+    pipeline = DDPMPipeline(unet=model, scheduler=scheduler)
+    pipeline.save_pretrained(model_dir)
+
+    print(f" Saved model {model_idx} → {model_dir}")
 
 
 # ==============================
-# PREPARE SPLITS (NO TRAINING)
+# MAIN
 # ==============================
 
-def prepare_cifar_splits():
-    """
-    Prepare CIFAR-10 dataset splits for membership inference.
+def main():
+    print(" Starting training of shadow models...")
 
-    NOTE:
-    This script only creates dataset splits (50% per model).
-    It does NOT train diffusion models due to computational constraints.
-    """
+    for i, (members, _) in enumerate(splits):
+        train_model(i, members)
 
-    print(" Preparing CIFAR-10 dataset...")
-    image_dir = prepare_cifar10(Path("data"), num_images=1000)
-    #image_dir = prepare_cifar10(Path("data"))
-
-    print(" Generating dataset splits...")
-    splits = generate_cifar10_splits(n_models=NUM_MODELS)
-
-    print(" Creating model-specific training folders...")
-
-    for model_idx, (members, _) in enumerate(splits):
-        model_dir = OUTPUT_DIR / f"model_{model_idx}"
-        train_dir = model_dir / "train"
-
-        train_dir.mkdir(parents=True, exist_ok=True)
-
-        print(f"\n Model {model_idx}: preparing training data...")
-
-        selected_members = members[:MAX_IMAGES_PER_MODEL]
-
-        for idx in selected_members:
-            src = image_dir / f"img_{idx:05d}_class{idx % 10}.png"
-
-            if src.exists():
-                shutil.copy(src, train_dir / src.name)
-
-        print(f" Model {model_idx} ready ({len(selected_members)} images)")
-
-    print("\n All dataset splits prepared!")
+    print("\n All models trained successfully!")
 
 
 if __name__ == "__main__":
-    prepare_cifar_splits()
+    main()
