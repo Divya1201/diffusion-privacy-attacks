@@ -52,13 +52,13 @@ def prepare_cifar10(output_dir: Path, num_images: Optional[int] = None) -> Path:
         img, label = dataset[i]
         img.save(save_dir / f"img_{i:05d}_class{label}.png")
 
-    print(f"✅ Saved {n} CIFAR-10 images to {save_dir}")
+    print(f" Saved {n} CIFAR-10 images to {save_dir}")
     return save_dir
 
 
 def generate_cifar10_splits(
     n_models: int = N_MODELS,
-    total_images: int = 50_000,
+    total_images: int = 100,       #50_000
     split_fraction: float = SPLIT_FRACTION,
     seed: int = 42,
 ) -> List[Tuple[List[int], List[int]]]:
