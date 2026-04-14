@@ -40,7 +40,7 @@ def generate_images_for_prompt(
     pipe: StableDiffusionPipeline,
     prompt: str,
     output_dir: Path,
-    num_images: int = 500,
+    num_images: int = 50,   #500
     image_size: int = 512,
     guidance_scale: float = 7.5,
     batch_size: int = 8,
@@ -91,7 +91,7 @@ def generate_all_prompts(
     pipe: StableDiffusionPipeline,
     prompts: List[str],
     output_dir: Path,
-    num_images_per_prompt: int = 500,
+    num_images_per_prompt: int = 50,   #500
     batch_size=8,
 ) -> None:
 
@@ -107,6 +107,6 @@ def generate_all_prompts(
             batch_size=batch_size,
         )
 
-    print("\n✅ All images generated.")
+    print("\n All images generated.")
 
 
