@@ -196,16 +196,25 @@ def main():
         # ----------------------------
         csv_path = output_path.with_suffix(".csv")
 
-        with csv_path.open("w", newline="") as f:
+        with csv_path.open("w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(["query", "match", "l2", "score", "clique", "extracted"])
+            writer.writerow([
+                "query_path",
+                "match_path",
+                "l2_norm",
+                "mean_clique_dist",
+                "adaptive_score",
+                "clique_size",
+                "extracted",
+            ])
 
             for r in results:
                 writer.writerow([
-                    r.query_path,
-                    r.match_path,
-                    r.l2_norm,
-                    r.adaptive_score,
+                    str(r.query_path),
+                    str(r.match_path),
+                    f"{r.l2_norm:.8f}",
+                    f"{r.mean_clique_dist:.8f}",
+                    f"{r.adaptive_score:.8f}",
                     r.clique_size,
                     r.extracted,
                 ])
