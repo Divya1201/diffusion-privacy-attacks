@@ -27,7 +27,7 @@ from torchvision.datasets import CIFAR10
 # CIFAR-10 with 50% random splits (§5)
 # ---------------------------------------------------------------------------
 
-N_MODELS = 16        # § "train 16 diffusion models"
+N_MODELS = 2  #16        # § "train 16 diffusion models"
 SPLIT_FRACTION = 0.5 # § "randomly-partitioned half"
 
 
@@ -108,7 +108,7 @@ def get_member_nonmember_images(
 def get_top_duplicated_prompts(
     duplicate_counts: Dict[Path, int],
     captions: Dict[Path, str],
-    top_k: int = 350_000,
+    top_k: int = 20,    #350_000
 ) -> List[str]:
     """
     Return the top_k captions corresponding to the most-duplicated images.
