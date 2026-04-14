@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 DP-LoRA integrated extraction attack runner.
 
@@ -16,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import pickle
+import csv
 from pathlib import Path
 from typing import Dict
 
@@ -53,7 +53,7 @@ class LoRAAdapter:
 
 
 # ==============================
-# DP-LoRA Mechanism (FIXED)
+# DP-LoRA Mechanism
 # ==============================
 def dp_lora_mechanism(
     embeddings: Dict[Path, np.ndarray],
@@ -72,7 +72,7 @@ def dp_lora_mechanism(
     vecs_lora = np.array([adapter.forward(v) for v in vecs])
 
     # --------------------------------
-    # 2. Clip (NOW EFFECTIVE)
+    # 2. Clip 
     # --------------------------------
     norms = np.linalg.norm(vecs_lora, axis=1, keepdims=True)
     clip_factors = np.minimum(1.0, C / (norms + 1e-12))
@@ -134,10 +134,19 @@ def main():
         reference_dir = args.reference_dir
 
     # --------------------------------
-    # Embed GENERATED images (IMPORTANT)
+    # Embed GENERATED images 
     # --------------------------------
-    print(" Embedding generated images with CLIP...")
-    embeddings = embed_directory(args.generated_dir)
+    cache_file = Path("clip_embeddings.pkl")
+
+    if cache_file.exists():
+        print(" Loading cached CLIP embeddings...")
+        with open(cache_file, "rb") as f:
+            embeddings = pickle.load(f)
+    else:
+        print(" Embedding generated images with CLIP...")
+        embeddings = embed_directory(args.generated_dir)
+        with open(cache_file, "wb") as f:
+            pickle.dump(embeddings, f)
 
     for sigma in args.sigmas:
         print(f"\n[DP-LoRA MODE | sigma={sigma}]")
@@ -160,6 +169,7 @@ def main():
             clique_min_size=args.clique_min_size,
             patch_l2_threshold=args.patch_l2_threshold,
             extraction_delta=args.extraction_delta,
+            top_k=5, 
         )
 
         results = run_extraction_attack(
@@ -181,8 +191,27 @@ def main():
         with output_path.open("wb") as f:
             pickle.dump(results, f)
 
+        # ----------------------------
+        # Save CSV 
+        # ----------------------------
+        csv_path = output_path.with_suffix(".csv")
+
+        with csv_path.open("w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["query", "match", "l2", "score", "clique", "extracted"])
+
+            for r in results:
+                writer.writerow([
+                    r.query_path,
+                    r.match_path,
+                    r.l2_norm,
+                    r.adaptive_score,
+                    r.clique_size,
+                    r.extracted,
+                ])
+                
         print(f" Extracted images: {len(extracted)}")
-        print(f" Saved to {output_path}")
+        print(f" Saved to {output_path} and {csv_path}")
 
 
 if __name__ == "__main__":
