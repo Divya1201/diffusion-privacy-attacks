@@ -253,7 +253,7 @@ def _mean_intra_clique_dist(
     Paper: "ordering them by the mean distance between images in the clique
     to identify generations that we predict are likely to be memorised."
     """
-    if len(clique) < 2:
+    if len(clique) < 2:     #10
         return 0.0
     total, count = 0.0, 0
     for i in range(len(clique)):
@@ -334,7 +334,7 @@ def find_memorized_cliques(
         cliques_scored.append((clique, mean_d))
 
     cliques_scored.sort(key=lambda x: x[1])   # ascending: best cliques first
-    print(f"✅ Found {len(cliques_scored)} cliques (≥{config.clique_min_size} images).")
+    print(f" Found {len(cliques_scored)} cliques (≥{config.clique_min_size} images).")
     return cliques_scored
 
 
@@ -375,7 +375,7 @@ def run_extraction_attack(
     # Stage 1 — memorisation detection via cliques
     cliques_scored = find_memorized_cliques(generated_paths, config, clip_embeddings)
     if not cliques_scored:
-        print("⚠️  No cliques found — no memorisation detected.")
+        print("  No cliques found — no memorisation detected.")
         return []
 
     # Flatten: track clique size and mean dist for each selected image
@@ -438,5 +438,5 @@ def run_extraction_attack(
     # Sort by adaptive_score ascending (best extractions first)
     results.sort(key=lambda r: r.adaptive_score)
     extracted_count = sum(1 for r in results if r.extracted)
-    print(f"✅ {extracted_count} images satisfy the (ℓ₂, δ={config.extraction_delta})-extraction criterion.")
+    print(f" {extracted_count} images satisfy the (ℓ₂, δ={config.extraction_delta})-extraction criterion.")
     return results
