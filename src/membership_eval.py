@@ -86,13 +86,10 @@ def main():
                 model, scheduler, img, timestep=TIMESTEP, device=device
             )
 
-            if img_idx in members:
+            if idx in members:
                 in_losses.append(loss)
-            else:
+            elif idx in nonmembers:
                 out_losses.append(loss)
-
-    in_losses = np.array(in_losses)
-    out_losses = np.array(out_losses)
 
     print(f"IN samples: {len(in_losses)}")
     print(f"OUT samples: {len(out_losses)}")
@@ -110,12 +107,16 @@ def main():
     print(f"TPR: {tpr:.4f}")
     print(f"FPR: {fpr:.4f}")
 
+    in_losses = np.array(in_losses)
+    out_losses = np.array(out_losses)
+    
     # ----------------------------
     # LiRA attack 
     # ----------------------------
     print("\n Running LiRA...")
 
     # Fit Gaussian distributions
+    
     mu_in, std_in = np.mean(in_losses), np.std(in_losses)
     mu_out, std_out = np.mean(out_losses), np.std(out_losses)
 
