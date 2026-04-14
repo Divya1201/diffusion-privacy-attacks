@@ -199,7 +199,7 @@ def find_optimal_timestep(
     This is expensive. Pre-compute and cache results.
     """
     if timesteps is None:
-        timesteps = list(range(10, 501, 10))   # sample t: 10, 20, …, 500
+        timesteps = [50,100,200]    #list(range(10, 501, 10))   # sample t: 10, 20, …, 500
 
     best_t, best_tpr = 100, 0.0
     for t in timesteps:
@@ -217,5 +217,5 @@ def find_optimal_timestep(
             best_tpr = tpr
             best_t = t
 
-    print(f"✅ Best timestep: t={best_t}  TPR@FPR=1%={best_tpr:.3f}")
+    print(f" Best timestep: t={best_t}  TPR@FPR=1%={best_tpr:.3f}")
     return best_t
