@@ -89,7 +89,7 @@ def train_model(model_idx, member_indices):
 
             noise = torch.randn_like(images)
             timesteps = torch.randint(
-                0, 1000, (images.size(0),), device=DEVICE
+                0, scheduler.config.num_train_timesteps, (images.size(0),), device=DEVICE
             )
 
             noisy_images = scheduler.add_noise(images, noise, timesteps)
