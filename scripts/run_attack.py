@@ -181,7 +181,7 @@ def main() -> None:
     # ── CIFAR-10 shortcut (§5) ────────────────────────────────────────────────
     if args.use_cifar:
         print(" Preparing CIFAR-10 dataset...")
-        args.reference_dir = prepare_cifar10(Path("data"), num_images=1000)
+        args.reference_dir = prepare_cifar10(Path("data"), num_images=50000)  #1000
         #args.reference_dir = prepare_cifar10(Path("data"))
         if args.generated_dir is None:
             raise ValueError(
@@ -285,7 +285,7 @@ def main() -> None:
 
     if args.show_grid:
         print("\n  Displaying extracted-image grid...")
-        show_top_results(results, n=9, only_extracted=True)
+        show_top_results(results, n=len(results), only_extracted=True)
 
 
 if __name__ == "__main__":
