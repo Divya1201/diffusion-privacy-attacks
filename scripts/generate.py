@@ -24,9 +24,9 @@ def load_prompts(file="prompts.txt"):
 
 PROMPTS = load_prompts()
 
-IMAGES_PER_PROMPT = 20 #500   # REQUIRED (paper: 500 generations)
+IMAGES_PER_PROMPT = 500  #20   # REQUIRED (paper: 500 generations)
 
-BATCH_SIZE =  2 #8            # GPU: 6–8 | CPU: 2–4
+BATCH_SIZE =  8  #2            # GPU: 6–8 | CPU: 2–4
 
 # ==============================
 # MAIN
@@ -40,7 +40,7 @@ def main():
     device = pipe.device
     print(f" Running on: {device}")
 
-    print("\n Generating images (500 per prompt as per paper)...")
+    print("\n Generating images (500 per prompt)...")
 
     generate_all_prompts(
         pipe=pipe,
