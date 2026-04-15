@@ -130,7 +130,7 @@ def main():
     # --------------------------------
     if args.reference_dir is None:
         print(" Preparing CIFAR-10 dataset...")
-        reference_dir = prepare_cifar10(Path("data"), num_images=1000)
+        reference_dir = prepare_cifar10(Path("data"), num_images=50000)    #1000
         #reference_dir = prepare_cifar10(Path("data"))
     else:
         reference_dir = args.reference_dir
@@ -179,7 +179,7 @@ def main():
             generated_dir=args.generated_dir,
             reference_dir=reference_dir,
             config=config,
-            clip_embeddings=dp_embeddings,  # KEY CHANGE
+            clip_embeddings=dp_embeddings,  
         )
 
         extracted = [r for r in results if r.extracted]
