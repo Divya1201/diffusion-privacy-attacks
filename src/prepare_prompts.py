@@ -12,11 +12,11 @@ from clip_utils import embed_directory, find_near_duplicates
 PAPER_PROMPTS = [
     "Mona Lisa painting",
     "Nike logo",
-    #"Apple logo",
-    #"Coca Cola logo",
-    #"Starbucks logo",
-    #"McDonald's logo",
-    #"Google logo",
+    "Apple logo",
+    "Coca Cola logo",
+    "Starbucks logo",
+    "McDonald's logo",
+    "Google logo",
 ]
 
 
@@ -25,7 +25,7 @@ def main():
     # (Optional) CLIP duplicate analysis
     # --------------------------------
     print(" Preparing dataset...")
-    image_dir = prepare_cifar10(Path("data"), num_images=1000)
+    image_dir = prepare_cifar10(Path("data"), num_images=50000)    #1000
     #image_dir = prepare_cifar10(Path("data"))
 
     print(" Embedding images with CLIP...")
