@@ -14,9 +14,9 @@ from dataset import generate_cifar10_splits
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 64
-EPOCHS = 3        #300
-NUM_MODELS = 2 #16
-MAX_IMAGES_PER_MODEL = 50 #5000  
+EPOCHS = 300        #3
+NUM_MODELS = 16     #2
+MAX_IMAGES_PER_MODEL = 5000 #50  
 
 SAVE_DIR = Path("models")
 SAVE_DIR.mkdir(exist_ok=True)
@@ -58,7 +58,7 @@ def train_model(model_idx, member_indices):
         in_channels=3,
         out_channels=3,
         layers_per_block=2,
-        block_out_channels=(64, 128, 128, 256),  # (128, 128, 256, 256)
+        block_out_channels=(128, 128, 256, 256),  # (64, 128, 128, 256)
         down_block_types=(
             "DownBlock2D",
             "DownBlock2D",
@@ -73,7 +73,7 @@ def train_model(model_idx, member_indices):
         ),
     ).to(DEVICE)
 
-    scheduler = DDPMScheduler(num_train_timesteps=500)    #1000
+    scheduler = DDPMScheduler(num_train_timesteps=1000)    #500
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
 
