@@ -69,7 +69,7 @@ def embed_directory(
 def find_near_duplicates(
     embeddings: Dict[Path, np.ndarray],
     cosine_threshold: float = 0.9,
-    batch_size: int = 200,   #1000
+    batch_size: int = 1000,   #200
 ) -> Dict[Path, List[Path]]:
     """
     Efficient block-wise duplicate detection using cosine similarity.
