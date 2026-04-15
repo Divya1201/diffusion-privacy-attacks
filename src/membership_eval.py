@@ -19,8 +19,8 @@ from scipy.stats import norm
 # ==============================
 
 TIMESTEP = 100
-NUM_IMAGES = 50     #500   
-NUM_MODELS_TO_USE = 2     #16
+NUM_IMAGES = 500     #50   
+NUM_MODELS_TO_USE = 16     #2
 
 MODEL_DIR = Path("models")
 
@@ -43,7 +43,7 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
     print(" Preparing dataset...")
-    image_dir = prepare_cifar10(Path("data"), num_images=1000)
+    image_dir = prepare_cifar10(Path("data"), num_images=50000)    #1000
     #image_dir = prepare_cifar10(Path("data"))
 
     print(" Generating CIFAR splits...")
