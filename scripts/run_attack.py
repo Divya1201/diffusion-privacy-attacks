@@ -12,12 +12,11 @@ Usage examples
 # Basic run against your own generated/reference directories
 python run_attack.py \
     --generated-dir outputs/generated \
-    --reference-dir data/cifar10_images
+    --reference-dir data
 
 # Use CIFAR-10 as the reference set (auto-downloads)
 python run_attack.py \
     --generated-dir outputs/generated \
-    --use-cifar
 
 # Tune thresholds to match the paper's Stable Diffusion settings
 python run_attack.py \
@@ -55,11 +54,10 @@ def parse_args() -> argparse.Namespace:
     # ── Input / Output ────────────────────────────────────────────────────────
     io = parser.add_argument_group("I/O paths")
     io.add_argument(
-        "--generated-dir", type=Path, required=False,
-        help="Directory containing candidate generated images (one per file).",
+        "--generated-dir", type=Path, required=True,
     )
     io.add_argument(
-        "--reference-dir", type=Path, required=False,
+        "--reference-dir", type=Path, required=True,
         help="Directory containing training-set reference images.",
     )
     io.add_argument(
@@ -152,12 +150,6 @@ def parse_args() -> argparse.Namespace:
 
     args = parser.parse_args()
 
-    # Validate: need at least one of --generated-dir or --use-cifar
-    if not args.use_cifar and args.generated_dir is None:
-        parser.error("Provide --generated-dir or --use-cifar.")
-    if not args.use_cifar and args.reference_dir is None:
-        parser.error("Provide --reference-dir or --use-cifar.")
-
     return args
 
 
@@ -180,7 +172,7 @@ def main() -> None:
         tile_size=args.tile_size,
         patch_l2_threshold=args.patch_l2_threshold,
         clique_min_size=args.clique_min_size,
-        clip_cosine_threshold=args.clip_cosine_threshold,
+        clip_cosine_threshold=None,
         adaptive_alpha=args.adaptive_alpha,
         adaptive_n=args.adaptive_n,
         extraction_delta=args.extraction_delta,
@@ -202,8 +194,17 @@ def main() -> None:
     )
 
     if not results:
-        print("  No suspicious samples found — try lowering --clique-min-size or --patch-l2-threshold.")
-        return
+      print("\n❌ No suspicious samples found")
+
+      print("\nTry these settings:")
+      print("  --clique-min-size 5")
+      print("  --patch-l2-threshold 0.1")
+
+      print("\nAlso check:")
+      print("  ✔ generated images exist")
+      print("  ✔ reference dataset is not empty")
+
+      return
 
     # ── Console summary ───────────────────────────────────────────────────────
     extracted = [r for r in results if r.extracted]
