@@ -123,7 +123,7 @@ def parse_args() -> argparse.Namespace:
 
     # CLIP pre-filter (§4.2)
     cfg.add_argument(
-        "--clip-cosine-threshold", type=float, default=0.9,
+        "--clip-cosine-threshold", type=float, default=None,
         help=(
             "CLIP cosine-similarity threshold for near-duplicate pre-filtering (§4.2). "
             'Paper: "high cosine similarity".'
