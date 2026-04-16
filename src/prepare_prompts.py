@@ -10,13 +10,10 @@ from clip_utils import embed_directory, find_near_duplicates
 # ==============================
 
 PAPER_PROMPTS = [
-    "Mona Lisa painting",
-    "Nike logo",
-    "Apple logo",
-    "Coca Cola logo",
-    "Starbucks logo",
-    "McDonald's logo",
-    "Google logo",
+    "a stock photo of a smiling woman looking at the camera",
+    "a product image of white sneakers on plain background",
+    "a professional headshot of a man in a suit studio lighting",
+    "a close-up photo of a dog sitting on grass",
 ]
 
 
