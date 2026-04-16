@@ -1,15 +1,11 @@
 from pathlib import Path
-import pickle
-
-from dataset import prepare_cifar10
-from clip_utils import embed_directory, find_near_duplicates
-
+import random
 
 # ==============================
-# PAPER-CONSISTENT PROMPTS
+# BASE PROMPTS 
 # ==============================
 
-PAPER_PROMPTS = [
+BASE_PROMPTS = [
     "a stock photo of a smiling woman looking at the camera",
     "a professional portrait of a smiling woman",
     "a close up photo of a smiling woman",
@@ -20,51 +16,39 @@ PAPER_PROMPTS = [
     "a professional headshot of a man in a suit studio lighting",
     "a corporate portrait of a man in formal attire",
 
-     "a close-up photo of a dog sitting on grass",
-     "a dog portrait outdoors natural light",
-     "a pet dog sitting in a park"
+    "a close-up photo of a dog sitting on grass",
+    "a dog portrait outdoors natural light",
+    "a pet dog sitting in a park"
 ]
 
+# ==============================
+# SIMULATE DUPLICATION (CRITICAL)
+# ==============================
+
+NUM_TOTAL_PROMPTS = 100   # simulate "many captions"
+HIGH_DUP_FACTOR = 20      # strong duplication
 
 def main():
-    # --------------------------------
-    # (Optional) CLIP duplicate analysis
-    # --------------------------------
-    print(" Preparing dataset...")
-    image_dir = prepare_cifar10(Path("data"), num_images=50000)    #1000
-    #image_dir = prepare_cifar10(Path("data"))
+    prompts = []
 
-    print(" Embedding images with CLIP...")
-    embeddings = embed_directory(image_dir)
-    
-    print(f" Total embeddings: {len(embeddings)}")
-    
-    print(" Finding duplicates (Block-wise)...")
-    duplicates = find_near_duplicates(embeddings, cosine_threshold=0.9, batch_size=1000)
+    # Strongly duplicated prompts (like LAION top duplicates)
+    for p in BASE_PROMPTS:
+        prompts.extend([p] * HIGH_DUP_FACTOR)
 
-    duplicate_counts = {k: len(v) for k, v in duplicates.items()}
+    # Add some random variation (optional realism)
+    random.shuffle(prompts)
 
-    # Save for evaluation (histogram)
-    with open("duplicate_counts.pkl", "wb") as f:
-        pickle.dump(duplicate_counts, f)
+    # Limit total prompts
+    prompts = prompts[:NUM_TOTAL_PROMPTS]
 
-    print(" Saved duplicate counts to duplicate_counts.pkl")
-
-    # --------------------------------
-    # USE PAPER PROMPTS (NOT CIFAR)
-    # --------------------------------
-    print("\n USING PAPER PROMPTS:")
-    for p in PAPER_PROMPTS:
-        print(f" - {p}")
-
-    # Save prompts
+    # Save
     output_file = Path("prompts.txt")
     with open(output_file, "w") as f:
-        for p in PAPER_PROMPTS:
+        for p in prompts:
             f.write(p + "\n")
 
-    print(f"\n Saved prompts to {output_file}")
-
+    print(f"Saved {len(prompts)} prompts")
+    print("High duplication simulated ✔")
 
 if __name__ == "__main__":
     main()
