@@ -36,7 +36,6 @@ import pickle
 from pathlib import Path
 
 from attack import AttackConfig, AttackResult, run_extraction_attack
-from dataset import prepare_cifar10
 from visualize import show_pair, show_top_results
 
 
@@ -68,15 +67,6 @@ def parse_args() -> argparse.Namespace:
         help="Path to write the CSV results file.",
     )
 
-    # ── Dataset helpers ───────────────────────────────────────────────────────
-    ds = parser.add_argument_group("Dataset helpers")
-    ds.add_argument(
-        "--use-cifar", action="store_true",
-        help=(
-            "Automatically download CIFAR-10 and use it as the reference set "
-            "(§5 experimental setup)."
-        ),
-    )
 
     # ── AttackConfig knobs ────────────────────────────────────────────────────
     cfg = parser.add_argument_group("Attack configuration (AttackConfig)")
@@ -178,16 +168,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    # ── CIFAR-10 shortcut (§5) ────────────────────────────────────────────────
-    if args.use_cifar:
-        print(" Preparing CIFAR-10 dataset...")
-        args.reference_dir = prepare_cifar10(Path("data"), num_images=50000)  #1000
-        #args.reference_dir = prepare_cifar10(Path("data"))
-        if args.generated_dir is None:
-            raise ValueError(
-                "--generated-dir must still be provided even with --use-cifar. "
-                "Point it to images sampled from your CIFAR-10-trained diffusion model."
-            )
+    print("\n Running Extraction Attack...")
+    print(f"Generated dir : {args.generated_dir}")
+    print(f"Reference dir : {args.reference_dir}")
 
     # ── Build AttackConfig from CLI args ──────────────────────────────────────
     config = AttackConfig(
