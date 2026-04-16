@@ -11,9 +11,18 @@ from clip_utils import embed_directory, find_near_duplicates
 
 PAPER_PROMPTS = [
     "a stock photo of a smiling woman looking at the camera",
+    "a professional portrait of a smiling woman",
+    "a close up photo of a smiling woman",
+
     "a product image of white sneakers on plain background",
+    "white sneakers product photography",
+
     "a professional headshot of a man in a suit studio lighting",
-    "a close-up photo of a dog sitting on grass",
+    "a corporate portrait of a man in formal attire",
+
+     "a close-up photo of a dog sitting on grass",
+     "a dog portrait outdoors natural light",
+     "a pet dog sitting in a park"
 ]
 
 
