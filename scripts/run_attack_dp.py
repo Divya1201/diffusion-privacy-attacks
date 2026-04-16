@@ -23,8 +23,6 @@ import numpy as np
 
 from clip_utils import embed_directory
 from attack import run_extraction_attack, AttackConfig
-from dataset import prepare_cifar10
-
 
 # ==============================
 # Utility
@@ -129,16 +127,14 @@ def main():
     # Reference dataset
     # --------------------------------
     if args.reference_dir is None:
-        print(" Preparing CIFAR-10 dataset...")
-        reference_dir = prepare_cifar10(Path("data"), num_images=50000)    #1000
-        #reference_dir = prepare_cifar10(Path("data"))
+        raise ValueError("You must provide --reference-dir (LAION dataset)")
     else:
         reference_dir = args.reference_dir
 
     # --------------------------------
     # Embed GENERATED images 
     # --------------------------------
-    cache_file = Path(f"clip_embeddings_{args.generated_dir.name}.pkl")
+    cache_file = Path("clip_embeddings_combined.pkl")
 
     if cache_file.exists():
         print(" Loading cached CLIP embeddings...")
@@ -146,7 +142,13 @@ def main():
             embeddings = pickle.load(f)
     else:
         print(" Embedding generated images with CLIP...")
-        embeddings = embed_directory(args.generated_dir)
+        print("Embedding generated + reference images...")
+
+        emb_gen = embed_directory(args.generated_dir)
+        emb_ref = embed_directory(reference_dir)
+
+        # Merge both
+        embeddings = {**emb_gen, **emb_ref}
         with open(cache_file, "wb") as f:
             pickle.dump(embeddings, f)
 
@@ -172,7 +174,8 @@ def main():
             clique_min_size=args.clique_min_size,
             patch_l2_threshold=args.patch_l2_threshold,
             extraction_delta=args.extraction_delta,
-            top_k=5, 
+            top_k=5,
+            clip_cosine_threshold=None,  
         )
 
         results = run_extraction_attack(
@@ -181,7 +184,13 @@ def main():
             config=config,
             clip_embeddings=dp_embeddings,  
         )
-
+        if not results:
+            print("\n No results found (DP-LoRA)")
+            print("Try:")
+            print("  --clique-min-size 5")
+            print("  --patch-l2-threshold 0.1")
+            continue
+            
         extracted = [r for r in results if r.extracted]
 
         # --------------------------------
