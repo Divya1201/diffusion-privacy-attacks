@@ -18,7 +18,7 @@ from scipy.stats import norm
 # CONFIG
 # ==============================
 
-TIMESTEP = 100
+TIMESTEPS = [1, 10, 50, 100, 200, 300, 500, 800, 1000]
 NUM_IMAGES = 500     #50   
 NUM_MODELS_TO_USE = 16     #2
 
@@ -71,109 +71,97 @@ def main():
     # ----------------------------
     print(" Computing IN / OUT losses (TRUE LiRA)...")
 
-    in_losses = []
-    out_losses = []
+    results = []
+    for t in TIMESTEPS:
+        print(f"\n===== TIMESTEP {t} =====")
+        in_losses = []
+        out_losses = []
 
-    for img_idx in range(NUM_IMAGES):
-        path = all_images[img_idx]
-        img = load_image(path)
+        for img_idx in range(NUM_IMAGES):
+            path = all_images[img_idx]
+            img = load_image(path)
 
-        idx = int(path.stem.split("_")[1])
-        for model_idx, (model, scheduler) in enumerate(models):
-            members, nonmembers = splits[model_idx]
+            idx = int(path.stem.split("_")[1])
+            for model_idx, (model, scheduler) in enumerate(models):
+                members, nonmembers = splits[model_idx]
             
-            loss = compute_diffusion_loss(
-                model, scheduler, img, timestep=TIMESTEP, device=device
-            )
+                loss = compute_diffusion_loss(
+                    model, scheduler, img, timestep=t, device=device
+                )
 
-            if idx in members:
-                in_losses.append(loss)
-            elif idx in nonmembers:
-                out_losses.append(loss)
-
-    print(f"IN samples: {len(in_losses)}")
-    print(f"OUT samples: {len(out_losses)}")
-
+                if idx in members:
+                    in_losses.append(loss)
+                elif idx in nonmembers:
+                    out_losses.append(loss)
+        in_losses = np.array(in_losses)
+        out_losses = np.array(out_losses)
     
+        # ----------------------------
+        # LiRA attack 
+        # ----------------------------
+        print("\n Running LiRA...")
+
+        # Fit Gaussian distributions
     
-    # ----------------------------
-    # Threshold attack
-    # ----------------------------
-    print("\n Running threshold attack...")
+        mu_in, std_in = np.mean(in_losses), np.std(in_losses)
+        mu_out, std_out = np.mean(out_losses), np.std(out_losses)
 
-    tau, tpr, fpr = loss_threshold_attack(in_losses, out_losses)
+        # Likelihood ratio
+        def lira_score(loss):
+            p_in = norm.pdf(loss, mu_in, std_in + 1e-8)
+            p_out = norm.pdf(loss, mu_out, std_out + 1e-8)
+            return np.log(p_in + 1e-12) - np.log(p_out + 1e-12)
 
-    print(f"Threshold: {tau:.4f}")
-    print(f"TPR: {tpr:.4f}")
-    print(f"FPR: {fpr:.4f}")
+        # Compute LiRA scores for ALL samples
+        member_scores = [lira_score(loss) for loss in in_losses]
+        nonmember_scores = [lira_score(loss) for loss in out_losses]
 
-    in_losses = np.array(in_losses)
-    out_losses = np.array(out_losses)
-    
-    # ----------------------------
-    # LiRA attack 
-    # ----------------------------
-    print("\n Running LiRA...")
+        # Convert to numpy
+        member_scores = np.array(member_scores)
+        nonmember_scores = np.array(nonmember_scores)
 
-    # Fit Gaussian distributions
-    
-    mu_in, std_in = np.mean(in_losses), np.std(in_losses)
-    mu_out, std_out = np.mean(out_losses), np.std(out_losses)
+        # Labels
+        labels = np.concatenate([
+            np.ones(len(member_scores)),
+            np.zeros(len(nonmember_scores))
+        ])
 
-    print(f"IN dist: mean={mu_in:.4f}, std={std_in:.4f}")
-    print(f"OUT dist: mean={mu_out:.4f}, std={std_out:.4f}")
+        # Combine scores
+        scores = np.concatenate([member_scores, nonmember_scores])
 
-    # Likelihood ratio
-    def lira_score(loss):
-        p_in = norm.pdf(loss, mu_in, std_in + 1e-8)
-        p_out = norm.pdf(loss, mu_out, std_out + 1e-8)
-        return np.log(p_in + 1e-12) - np.log(p_out + 1e-12)
+        fpr_lira, tpr_lira, _ = roc_curve(labels, scores)
 
-    # Compute LiRA scores for ALL samples
-    member_scores = [lira_score(loss) for loss in in_losses]
-    nonmember_scores = [lira_score(loss) for loss in out_losses]
+        idx_1 = np.argmin(np.abs(fpr_lira - 0.01))
+        tpr_at_1 = tpr_lira[idx_1]
 
-    # Convert to numpy
-    member_scores = np.array(member_scores)
-    nonmember_scores = np.array(nonmember_scores)
+        print(f"TPR@FPR=1% = {tpr_at_1:.4f}")
 
-    # Labels
-    labels = np.concatenate([
-        np.ones(len(member_scores)),
-        np.zeros(len(nonmember_scores))
-    ])
+        results.append((t, tpr_at_1))
 
-    # Combine scores
-    scores = np.concatenate([member_scores, nonmember_scores])
+        # ----------------------------
+        # Accuracy
+        # ----------------------------
+        preds = (scores > 0).astype(int)
+        accuracy = (preds == labels).mean()
 
-    # ----------------------------
-    # Accuracy
-    # ----------------------------
-    preds = (scores > 0).astype(int)
-    accuracy = (preds == labels).mean()
+        print(f"LiRA Accuracy: {accuracy:.4f}")
 
-    print(f"LiRA Accuracy: {accuracy:.4f}")
+        # ----------------------------
+        # Score statistics 
+        # ----------------------------
+        print(f"Mean member score: {member_scores.mean():.4f}")
+        print(f"Mean non-member score: {nonmember_scores.mean():.4f}")
 
-    # ----------------------------
-    # Score statistics 
-    # ----------------------------
-    print(f"Mean member score: {member_scores.mean():.4f}")
-    print(f"Mean non-member score: {nonmember_scores.mean():.4f}")
-
-    # ----------------------------
-    # ROC Curve (LiRA)
-    # ----------------------------
-    fpr, tpr, _ = roc_curve(labels, scores)
+       
+    timesteps = [r[0] for r in results]
+    tprs = [r[1] for r in results]
 
     plt.figure()
-    plt.plot(fpr, tpr, label="LiRA")
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.xlabel("FPR")
-    plt.ylabel("TPR")
-    plt.title("LiRA ROC Curve")
+    plt.plot(timesteps, tprs, marker='o')
+    plt.xlabel("Diffusion timestep")
+    plt.ylabel("TPR @ FPR = 1%")
+    plt.title("LiRA Attack vs Timestep (Paper Figure 9)")
     plt.grid()
-    plt.legend()
     plt.show()
 
 if __name__ == "__main__":
